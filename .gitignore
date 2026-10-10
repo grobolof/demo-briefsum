@@ -18,3 +18,8 @@ auth.json
 *.log
 *.pid
 */dist/*
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
