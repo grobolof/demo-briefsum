@@ -1,0 +1,34 @@
+services:
+
+  application:
+    image: ghcr.io/grobolof/symfony:php-8.5-fpm-trixie
+    env_file: .env
+    working_dir: ${APP_PATH}
+    environment:
+      PHP_IDE_CONFIG: serverName=${APP_HOST}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "80:80"
+    volumes:
+      - ./:${APP_PATH}
+    depends_on:
+      - database
+
+  database:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/postgres/db.sql:/docker-entrypoint-initdb.d/db.sql
+
+  mailpit:
+    image: axllent/mailpit
+    hostname: mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
