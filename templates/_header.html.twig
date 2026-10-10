@@ -1,0 +1,104 @@
+{% set forecast_params = place is defined and place.slug != 'sankt-peterburg' ? {city: place.slug} : {} %}
+<header class="top{{ section|default('') == 'news' ? ' top-wide' : '' }}{{ forecast_nav|default(false) ? ' top-forecast' : '' }}">
+    <div class="top-bar">
+        <a class="brand" href="{{ path('app_weather', forecast_params) }}">
+            <img class="brand-logo" src="{{ asset('images/logo.png') }}" alt="" width="36" height="36">
+            <span>СиноптикЪ</span>
+        </a>
+        <nav class="site-nav" aria-label="Разделы сайта">
+            <a href="{{ path('app_weather', forecast_params) }}"{% if section|default('') == 'forecast' %} aria-current="page"{% endif %}>Прогноз</a>
+            <a href="{{ path('app_news_index') }}"{% if section|default('') == 'news' %} aria-current="page"{% endif %}>Новости погоды</a>
+        </nav>
+        {% if forecast_nav|default(false) %}
+            <div class="top-menu">
+                <nav class="nav" aria-label="Разделы прогноза">
+                    <a href="#now">Сейчас</a>
+                    <a href="#hourly">По часам</a>
+                    <a href="#days">На 10 дней</a>
+                </nav>
+                {% if places is defined and place is defined %}
+                    <div class="city-picker" data-city-picker>
+                        <button type="button" class="top-place" aria-haspopup="listbox" aria-expanded="false" aria-controls="city-menu" aria-label="Город">{{ place.name }}</button>
+                        <div class="city-menu" id="city-menu" role="listbox" aria-label="Город" hidden>
+                            {% for option in places %}
+                                {% set option_params = option.slug != 'sankt-peterburg' ? {city: option.slug} : {} %}
+                                <a class="city-option" role="option" href="{{ path('app_weather', option_params) }}" aria-selected="{{ option.slug == place.slug ? 'true' : 'false' }}">{{ option.name }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <form class="city-form" method="get" action="{{ path('app_weather') }}" hidden>
+                        <label class="sr-only" for="city-select">Город</label>
+                        <select id="city-select" name="city">
+                            {% for option in places %}
+                                <option value="{{ option.slug }}"{% if option.slug == place.slug %} selected{% endif %}>{{ option.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                {% endif %}
+            </div>
+        {% endif %}
+        <button type="button" class="theme-switch" role="switch" aria-checked="false" data-state="unchecked" aria-label="Тёмная тема">
+            <span class="theme-switch-thumb">
+                <svg class="theme-switch-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4" fill="#f5a524"/>
+                    <g fill="none" stroke="#f5a524" stroke-width="2" stroke-linecap="round">
+                        <path d="M12 2.8v2.2M12 19v2.2M2.8 12h2.2M19 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/>
+                    </g>
+                </svg>
+                <svg class="theme-switch-moon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path fill="#f3d78a" d="M14.8 3.1a7.4 7.4 0 1 0 5.5 12.4A6.3 6.3 0 1 1 14.8 3.1z"/>
+                </svg>
+            </span>
+        </button>
+    </div>
+</header>
+<script>
+    (function () {
+        var root = document.documentElement;
+        var toggle = document.querySelector('.theme-switch');
+        var apply = function (theme) {
+            var dark = theme === 'dark';
+            root.setAttribute('data-theme', dark ? 'dark' : 'light');
+            try {
+                localStorage.setItem('weather-theme', dark ? 'dark' : 'light');
+            } catch (e) {}
+            if (!toggle) {
+                return;
+            }
+            toggle.setAttribute('aria-checked', dark ? 'true' : 'false');
+            toggle.setAttribute('data-state', dark ? 'checked' : 'unchecked');
+            toggle.setAttribute('aria-label', dark ? 'Светлая тема' : 'Тёмная тема');
+        };
+        if (toggle) {
+            toggle.addEventListener('click', function () {
+                apply(toggle.getAttribute('aria-checked') === 'true' ? 'light' : 'dark');
+            });
+        }
+        apply(root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+
+        var picker = document.querySelector('[data-city-picker]');
+        if (!picker) {
+            return;
+        }
+        var button = picker.querySelector('.top-place');
+        var menu = picker.querySelector('.city-menu');
+        var setOpen = function (open) {
+            menu.hidden = !open;
+            button.setAttribute('aria-expanded', open ? 'true' : 'false');
+        };
+        button.addEventListener('click', function (event) {
+            event.stopPropagation();
+            setOpen(menu.hidden);
+        });
+        document.addEventListener('click', function (event) {
+            if (!picker.contains(event.target)) {
+                setOpen(false);
+            }
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                setOpen(false);
+            }
+        });
+    })();
+</script>

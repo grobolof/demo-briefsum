@@ -19,5 +19,24 @@ services:
     App\:
         resource: '../src/'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    GuzzleHttp\ClientInterface:
+        class: GuzzleHttp\Client
+        arguments:
+            -
+                timeout: 8
+                connect_timeout: 3
+                headers:
+                    Accept: application/json
+                    User-Agent: demo-briefsum/weather
+
+when@test:
+    services:
+        GuzzleHttp\ClientInterface:
+            class: GuzzleHttp\Client
+            public: true
+            arguments:
+                -
+                    timeout: 8
+                    headers:
+                        Accept: application/json
+                        User-Agent: demo-briefsum/weather

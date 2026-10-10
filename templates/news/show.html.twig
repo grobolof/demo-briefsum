@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ news.name }} — СиноптикЪ{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('styles/weather.css') }}">
+{% endblock %}
+
+{% block body %}
+    {% include '_header.html.twig' with {section: 'news'} %}
+
+    <main class="wrap news-wrap">
+        <article class="news-article">
+            <img class="news-cover" src="{{ news.preview }}" alt="" width="1200" height="675">
+            <time datetime="{{ news.createdAt|date('Y-m-d') }}">{{ news.createdAt|date('d.m.y') }}</time>
+            <h1>{{ news.name }}</h1>
+            <div class="news-description">
+                {% for paragraph in news.description|split("\n\n") %}
+                    {% if paragraph|trim %}
+                        <p>{{ paragraph }}</p>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% if news.images %}
+                <section class="gallery" data-carousel aria-label="Фотографии">
+                    <div class="gallery-viewport">
+                        {% for image in news.images %}
+                            <figure class="gallery-slide">
+                                <img src="{{ image }}" alt="Фотография {{ loop.index }}" width="1200" height="675">
+                            </figure>
+                        {% endfor %}
+                    </div>
+                    {% if news.images|length > 1 %}
+                        <button type="button" class="gallery-nav gallery-prev" data-carousel-prev aria-label="Предыдущее фото">
+                            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        <button type="button" class="gallery-nav gallery-next" data-carousel-next aria-label="Следующее фото">
+                            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        <div class="gallery-dots" role="tablist" aria-label="Фотографии">
+                            {% for image in news.images %}
+                                <button type="button" class="gallery-dot{% if loop.first %} is-active{% endif %}" data-carousel-dot="{{ loop.index0 }}" role="tab" aria-selected="{{ loop.first ? 'true' : 'false' }}" aria-label="Фотография {{ loop.index }} из {{ news.images|length }}"></button>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </section>
+            {% endif %}
+        </article>
+    </main>
+    {% if news.images and news.images|length > 1 %}
+        <script>
+            document.querySelectorAll('[data-carousel]').forEach(function (root) {
+                var viewport = root.querySelector('.gallery-viewport');
+                var width = function () {
+                    return viewport.clientWidth;
+                };
+                var dots = Array.prototype.slice.call(root.querySelectorAll('[data-carousel-dot]'));
+                var setActive = function () {
+                    var index = Math.round(viewport.scrollLeft / Math.max(width(), 1));
+                    dots.forEach(function (dot, i) {
+                        var active = i === index;
+                        dot.classList.toggle('is-active', active);
+                        dot.setAttribute('aria-selected', active ? 'true' : 'false');
+                    });
+                };
+                root.querySelector('[data-carousel-prev]').addEventListener('click', function () {
+                    viewport.scrollBy({left: -width(), behavior: 'smooth'});
+                });
+                root.querySelector('[data-carousel-next]').addEventListener('click', function () {
+                    viewport.scrollBy({left: width(), behavior: 'smooth'});
+                });
+                dots.forEach(function (dot) {
+                    dot.addEventListener('click', function () {
+                        viewport.scrollTo({left: Number(dot.getAttribute('data-carousel-dot')) * width(), behavior: 'smooth'});
+                    });
+                });
+                viewport.addEventListener('scroll', setActive, {passive: true});
+            });
+        </script>
+    {% endif %}
+{% endblock %}

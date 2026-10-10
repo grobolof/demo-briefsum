@@ -1,0 +1,194 @@
+{% extends 'base.html.twig' %}
+{% import 'weather/_icon.html.twig' as icons %}
+
+{% block title %}СиноптикЪ — погода в {{ page.cityIn }}{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('styles/weather.css') }}">
+{% endblock %}
+
+{% block body %}
+    {% include '_header.html.twig' with {
+        section: 'forecast',
+        forecast_nav: true,
+        place: place,
+        places: places,
+    } %}
+
+    <main class="wrap">
+        <section id="now" class="hero">
+            <h1>Погода в {{ page.cityIn }}</h1>
+            <p class="place">{{ page.city }}, {{ page.country }}</p>
+
+            <div class="now">
+                <p class="temp">{{ page.current.temperature }}</p>
+                <div class="now-copy">
+                    <p class="feels">
+                        Ощущается как {{ page.current.apparentTemperature }}
+                        {% if page.current.yesterdayTemperature %}
+                            <span>Вчера в это время {{ page.current.yesterdayTemperature }}</span>
+                        {% endif %}
+                    </p>
+                    <p class="condition">
+                        {{ icons.symbol(page.current.icon) }}
+                        <span>{{ page.current.condition }}</span>
+                    </p>
+                    <p class="summary">{{ page.current.summary }}</p>
+                </div>
+            </div>
+
+            <ul class="facts">
+                {% for fact in page.facts %}
+                    <li title="{{ fact.hint }}">
+                        {{ icons.symbol(fact.icon) }}
+                        <span>
+                            <strong>{{ fact.value }}</strong>
+                            <em>{{ fact.caption }}</em>
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section class="card outlook" aria-label="Краткий прогноз">
+            {% for item in page.outlook %}
+                <p>
+                    <strong>{{ item.label }}</strong>
+                    <span>{{ item.text }}</span>
+                </p>
+            {% endfor %}
+        </section>
+
+        <section id="hourly" class="block">
+            <div class="block-head">
+                <h2>Почасовой прогноз</h2>
+                <p>{{ page.city }}, {{ page.country }} — текущее локальное время {{ page.localTime }}</p>
+            </div>
+            <div class="scroller">
+                {% for entry in page.timeline %}
+                    <article class="slot{% if entry.kind != 'hour' %} slot-event{% endif %}" title="{{ entry.caption }}">
+                        <span class="slot-time">{{ entry.label }}</span>
+                        {{ icons.symbol(entry.icon) }}
+                        {% if entry.kind == 'hour' %}
+                            <span class="slot-temp">{{ entry.temperature }}</span>
+                            {% if entry.probability %}
+                                <span class="slot-pop">{{ entry.probability }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="slot-event">{{ entry.kind == 'sunrise' ? 'Восход' : 'Закат' }}</span>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section id="feel" class="block">
+            <div class="block-head">
+                <h2>Погода и самочувствие</h2>
+            </div>
+            <div class="feel">
+                {% for fact in page.wellbeing %}
+                    <article class="feel-card">
+                        {{ icons.symbol(fact.icon) }}
+                        <strong>{{ fact.value }}</strong>
+                        <span>{{ fact.caption }}</span>
+                        <em>{{ fact.hint }}</em>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section id="days" class="block">
+            <div class="block-head">
+                <h2>Прогноз на 10 дней</h2>
+                <p>Краткий прогноз</p>
+            </div>
+            <div class="strip">
+                {% for day in page.days %}
+                    <a href="#day-{{ day.date }}">
+                        <span class="strip-week">{{ day.weekdayShort }}</span>
+                        <span class="strip-date">{{ day.stripLabel }}</span>
+                        {{ icons.symbol(day.icon) }}
+                        <span class="max">{{ day.max }}</span>
+                        <span class="min">{{ day.min }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+            <p class="strip-legend"><span>день</span><span>ночь</span></p>
+
+            <div class="days">
+                {% for day in page.days %}
+                    <details class="day" id="day-{{ day.date }}" {% if loop.first %}open{% endif %}>
+                        <summary>
+                            <span class="day-when">
+                                <b>{{ day.weekdayShort }}</b>
+                                {{ day.stripLabel }}
+                            </span>
+                            <span class="day-main">
+                                {{ icons.symbol(day.icon) }}
+                                <span>
+                                    <strong>{{ day.title }}</strong>
+                                    <em>{{ day.condition }} · ветер до {{ day.windMax }}{% if day.gustMax %}, порывы до {{ day.gustMax }}{% endif %}</em>
+                                </span>
+                            </span>
+                            <span class="day-temps">
+                                <span class="max">{{ day.max }}</span>
+                                <span class="min">{{ day.min }}</span>
+                            </span>
+                        </summary>
+                        <div class="day-body">
+                            {% if day.parts is not empty %}
+                                <div class="table-wrap">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Погода</th>
+                                                <th>Ощущается</th>
+                                                <th>Ветер</th>
+                                                <th>Влажность</th>
+                                                <th>Давление, мм</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for part in day.parts %}
+                                                <tr>
+                                                    <th>{{ part.name }}</th>
+                                                    <td>
+                                                        {{ icons.symbol(part.icon) }}
+                                                        <span>
+                                                            <strong>{{ part.temperature }}</strong>
+                                                            {{ part.condition }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ part.apparent }}</td>
+                                                    <td>{{ part.wind }}</td>
+                                                    <td>{{ part.humidity }}</td>
+                                                    <td>{{ part.pressure }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                            <p class="day-meta">
+                                {% if day.sunrise and day.sunset %}
+                                    <span>Восход {{ day.sunrise }}</span>
+                                    {% if day.daylight %}<span>Световой день {{ day.daylight }}</span>{% endif %}
+                                    <span>Закат {{ day.sunset }}</span>
+                                {% endif %}
+                                {% if day.uv %}<span>УФ-индекс {{ day.uv }}</span>{% endif %}
+                                <span>Луна: {{ day.moon }}</span>
+                            </p>
+                        </div>
+                    </details>
+                {% endfor %}
+            </div>
+        </section>
+
+        <footer class="foot">
+            <p>Прогноз погоды — <a href="https://open-meteo.com/">Open-Meteo</a>. Фаза Луны — местный астрономический расчёт.</p>
+            <p>{{ page.city }}, {{ page.country }} · {{ place.latitude|number_format(2, '.') }}° с. ш., {{ place.longitude|number_format(2, '.') }}° в. д.</p>
+        </footer>
+    </main>
+{% endblock %}
