@@ -1,12 +1,14 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Погода временно недоступна{% endblock %}
+{% block title %}СиноптикЪ — прогноз недоступен{% endblock %}
 
 {% block stylesheets %}
     <link rel="stylesheet" href="{{ asset('styles/weather.css') }}">
 {% endblock %}
 
 {% block body %}
+    {% include '_header.html.twig' with {section: 'forecast'} %}
+
     <main class="wrap unavailable">
         <h1>Прогноз временно недоступен</h1>
         <p>Не удалось получить данные Open-Meteo. Обновите страницу через несколько минут.</p>

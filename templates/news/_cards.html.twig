@@ -1,0 +1,11 @@
+{% for item in items %}
+    <article class="news-card">
+        <a class="news-card-link" href="{{ path('app_news_show', {id: item.id}) }}">
+            <img src="{{ item.preview }}" alt="" width="640" height="360" loading="lazy">
+            <div class="news-card-body">
+                <time datetime="{{ item.createdAt|date('Y-m-d') }}">{{ item.createdAt|date('d.m.y') }}</time>
+                <h2>{{ item.name }}</h2>
+            </div>
+        </a>
+    </article>
+{% endfor %}

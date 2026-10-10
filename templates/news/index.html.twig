@@ -1,0 +1,145 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Новости погоды — СиноптикЪ{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('styles/weather.css') }}">
+{% endblock %}
+
+{% block body %}
+    {% include '_header.html.twig' with {section: 'news'} %}
+
+    <main class="wrap news-wrap">
+        <header class="news-head">
+            <h1>Новости погоды</h1>
+            <form class="news-sort" method="get" action="{{ path('app_news_index') }}">
+                <label class="sr-only" id="news-sort-label" for="news-sort">Сортировка</label>
+                <div class="sort-picker" data-sort-picker>
+                    <button type="button" class="top-place" aria-haspopup="listbox" aria-expanded="false" aria-controls="sort-menu" aria-labelledby="news-sort-label">{{ sort == 'asc' ? 'Сначала старые' : 'Сначала новые' }}</button>
+                    <div class="city-menu sort-menu" id="sort-menu" role="listbox" aria-labelledby="news-sort-label" hidden>
+                        <button type="button" class="city-option" role="option" data-sort-value="desc" aria-selected="{{ sort == 'desc' ? 'true' : 'false' }}">Сначала новые</button>
+                        <button type="button" class="city-option" role="option" data-sort-value="asc" aria-selected="{{ sort == 'asc' ? 'true' : 'false' }}">Сначала старые</button>
+                    </div>
+                </div>
+                <select class="sr-only" id="news-sort" name="sort" tabindex="-1" aria-hidden="true">
+                    <option value="desc"{% if sort == 'desc' %} selected{% endif %}>Сначала новые</option>
+                    <option value="asc"{% if sort == 'asc' %} selected{% endif %}>Сначала старые</option>
+                </select>
+            </form>
+        </header>
+
+        {% if items is empty %}
+            <p class="news-empty">Новостей пока нет.</p>
+        {% else %}
+            <div class="news-list" id="news-list">
+                {% include 'news/_cards.html.twig' with {items: items} %}
+            </div>
+            <div class="news-more" id="news-more"{% if not has_more %} hidden{% endif %}>
+                <a class="news-more-link" href="{{ path('app_news_index', {page: next_page, sort: sort}) }}">Показать ещё</a>
+                <span class="news-spinner" hidden>
+                    <span class="news-spinner-ring"></span>
+                    <span class="sr-only">Загрузка</span>
+                </span>
+            </div>
+        {% endif %}
+    </main>
+    <script>
+        (function () {
+            var sortPicker = document.querySelector('[data-sort-picker]');
+            if (sortPicker) {
+                var sortButton = sortPicker.querySelector('.top-place');
+                var sortMenu = sortPicker.querySelector('.sort-menu');
+                var sortSelect = document.getElementById('news-sort');
+                var setSortOpen = function (open) {
+                    sortMenu.hidden = !open;
+                    sortButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+                };
+                sortButton.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                    setSortOpen(sortMenu.hidden);
+                });
+                sortMenu.querySelectorAll('[data-sort-value]').forEach(function (option) {
+                    option.addEventListener('click', function () {
+                        sortSelect.value = option.getAttribute('data-sort-value');
+                        sortSelect.form.submit();
+                    });
+                });
+                document.addEventListener('click', function (event) {
+                    if (!sortPicker.contains(event.target)) {
+                        setSortOpen(false);
+                    }
+                });
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') {
+                        setSortOpen(false);
+                    }
+                });
+            }
+
+            var list = document.getElementById('news-list');
+            var more = document.getElementById('news-more');
+            if (!list || !more) {
+                return;
+            }
+            var link = more.querySelector('a');
+            var spinner = more.querySelector('.news-spinner');
+            var loading = false;
+            more.classList.add('is-enhanced');
+
+            var load = function () {
+                if (loading || more.hidden) {
+                    return;
+                }
+                loading = true;
+                var loaded = false;
+                more.classList.add('is-loading');
+                more.setAttribute('aria-busy', 'true');
+                spinner.hidden = false;
+                fetch(link.href, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('news page failed');
+                        }
+                        return response.json();
+                    })
+                    .then(function (payload) {
+                        loaded = true;
+                        list.insertAdjacentHTML('beforeend', payload.html);
+                        if (!payload.hasMore) {
+                            more.hidden = true;
+                            observer.disconnect();
+                            return;
+                        }
+                        var url = new URL(link.href, window.location.origin);
+                        var page = Number(url.searchParams.get('page') || '1') + 1;
+                        url.searchParams.set('page', String(page));
+                        link.href = url.pathname + url.search;
+                    })
+                    .catch(function () {
+                        more.classList.add('is-error');
+                    })
+                    .finally(function () {
+                        loading = false;
+                        spinner.hidden = true;
+                        more.classList.remove('is-loading');
+                        more.removeAttribute('aria-busy');
+                        if (loaded && !more.hidden && more.getBoundingClientRect().top < window.innerHeight + 240) {
+                            load();
+                        }
+                    });
+            };
+
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+                load();
+            });
+
+            var observer = new IntersectionObserver(function (entries) {
+                if (entries.some(function (entry) { return entry.isIntersecting; })) {
+                    load();
+                }
+            }, {rootMargin: '240px'});
+            observer.observe(more);
+        })();
+    </script>
+{% endblock %}
