@@ -2,6 +2,7 @@
 
 namespace App\Weather;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Cache\CacheItemPoolInterface;
@@ -10,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\DependencyInjection\Attribute\AutowireInline;
 
 final class OpenMeteoClient
 {
@@ -18,6 +20,14 @@ final class OpenMeteoClient
     private const KEEP_FOR_SECONDS = 30 * 24 * 60 * 60;
 
     public function __construct(
+        #[AutowireInline(Client::class, [[
+            'timeout' => 8,
+            'connect_timeout' => 3,
+            'headers' => [
+                'Accept' => 'application/json',
+                'User-Agent' => 'demo-briefsum/weather',
+            ],
+        ]])]
         private readonly ClientInterface $http,
         #[Autowire(service: 'cache.weather')]
         private readonly CacheItemPoolInterface $cache,
