@@ -31,10 +31,13 @@ final class WeatherControllerTest extends WebTestCase
         self::assertSelectorNotExists('#faq');
         self::assertSelectorTextContains('.brand', 'СиноптикЪ');
         self::assertSelectorExists('.top-bar > .brand');
-        self::assertSelectorExists('.top-bar > .site-nav');
+        self::assertSelectorExists('.top-cluster .site-nav');
         self::assertSelectorExists('.top-menu > .nav');
         self::assertSelectorExists('.top-menu .city-picker');
-        self::assertSelectorExists('.top-bar > .theme-switch');
+        self::assertSelectorExists('.top-cluster .theme-switch');
+        self::assertSelectorExists('button.nav-toggle');
+        self::assertSelectorExists('a[href="https://github.com/grobolof"]');
+        self::assertSelectorExists('a[href="https://github.com/grobolof/demo-weatherman"]');
         self::assertSelectorNotExists('.top-inner');
         self::assertSelectorTextContains('.site-nav', 'Прогноз');
         self::assertSelectorTextContains('.site-nav', 'Новости погоды');

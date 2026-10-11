@@ -14,6 +14,7 @@ services:
       - ./:${APP_PATH}
     depends_on:
       - database
+      - valkey
 
   database:
     image: postgres:18-alpine
@@ -32,3 +33,14 @@ services:
     ports:
       - "8025:8025"
       - "1025:1025"
+
+  valkey:
+    image: valkey/valkey:9-alpine
+    command: ["valkey-server", "--appendonly", "yes", "--save", "60", "1"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey-data:/data
+
+volumes:
+  valkey-data:
